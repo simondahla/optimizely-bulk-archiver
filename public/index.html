@@ -1,389 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Optimizely Bulk Archive</title>
   <meta name="description" content="Bulk-archive old Optimizely Web Experimentation A/B tests in a few clicks. Paste your personal API token and project ID, review what's paused or not started, then archive in bulk - runs entirely in your browser.">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; background: #f5f5f5; color: #1a1a1a; padding: 2rem; }
-    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
-    h1 span { color: #3b82f6; }
-    .intro { font-size: 13px; color: #666; max-width: 760px; margin-bottom: 1.5rem; line-height: 1.5; }
-    footer { max-width: 760px; margin: 2rem 0 0; padding-top: 1rem; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; line-height: 1.6; }
-    footer a { color: #3b82f6; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; max-width: 760px; }
-    .row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: flex-end; }
-    .field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .field label { font-size: 12px; color: #666; font-weight: 500; }
-    .field small { font-size: 11px; color: #999; margin-top: 2px; line-height: 1.4; }
-    .field small a { color: #3b82f6; text-decoration: none; }
-    .field small a:hover { text-decoration: underline; }
-    .field input { height: 36px; padding: 0 10px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; color: #1a1a1a; outline: none; transition: border-color 0.15s; }
-    .field input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-    button { height: 36px; padding: 0 14px; border: 1px solid #d0d0d0; border-radius: 6px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: inherit; cursor: pointer; white-space: nowrap; transition: background 0.1s; }
-    button:hover:not(:disabled) { background: #f5f5f5; }
-    button:active:not(:disabled) { transform: scale(0.98); }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button.primary { background: #3b82f6; color: #fff; border-color: transparent; }
-    button.primary:hover:not(:disabled) { background: #2563eb; }
-    button.danger { background: #ef4444; color: #fff; border-color: transparent; }
-    button.danger:hover:not(:disabled) { background: #dc2626; }
-    button.sm { height: 30px; padding: 0 10px; font-size: 13px; }
-    button.pg { height: 30px; padding: 0 10px; font-size: 13px; min-width: 34px; }
-    button.pg.active { background: #f0f0f0; font-weight: 600; }
-    .status { font-size: 13px; color: #666; margin-bottom: 1rem; min-height: 20px; }
-    .status.err { color: #dc2626; }
-    .status.ok  { color: #16a34a; }
-    .progress { font-size: 13px; color: #3b82f6; margin-bottom: 1rem; }
-    .toolbar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-    .toolbar .sel-count { font-size: 13px; color: #666; margin-right: auto; }
-    .log-wrap { margin-bottom: 1rem; }
-    .log-wrap summary { font-size: 12px; color: #888; cursor: pointer; user-select: none; margin-bottom: 4px; }
-    #log { background: #111; color: #d4d4d4; font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; padding: 10px 12px; border-radius: 6px; height: 160px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
-    #log .req  { color: #60a5fa; }
-    #log .res  { color: #4ade80; }
-    #log .err  { color: #f87171; }
-    #log .info { color: #a78bfa; }
-    .list { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
-    .item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #e8e8e8; background: #fff; cursor: pointer; transition: background 0.1s; }
-    .item:last-child { border-bottom: none; }
-    .item:hover { background: #f9f9f9; }
-    .item input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; accent-color: #3b82f6; }
-    .item-info { flex: 1; min-width: 0; }
-    .item-name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .item-meta { font-size: 12px; color: #999; margin-top: 2px; }
-    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; flex-shrink: 0; }
-    .badge-paused          { background: #fef9c3; color: #a16207; }
-    .badge-campaign_paused { background: #fde68a; color: #92400e; }
-    .badge-not_started     { background: #f1f5f9; color: #64748b; }
-    .pager { display: flex; gap: 4px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
-    .pager-info { font-size: 12px; color: #999; margin-left: 6px; }
-    .divider { border: none; border-top: 1px solid #e8e8e8; margin: 1rem 0; }
-  </style>
+  <link rel="stylesheet" href="pico.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Optimizely <span>Bulk Archive</span></h1>
-  <p class="intro">Clean up old Optimizely Web Experimentation A/B tests in bulk. Paste a personal API token and project ID, review paused or not-started experiments, then archive the ones you don't need - all client-side, nothing stored on a server.</p>
-  <div class="card">
-    <form id="settingsForm" onsubmit="event.preventDefault(); fetchOptimizations()">
-      <div class="row">
-        <div class="field" style="flex:2;">
-          <label for="token">Personal API token</label>
-          <input id="token" name="token" type="password" autocomplete="current-password"
-                 placeholder="Paste your token here" />
-          <small>Generate at <a href="https://app.optimizely.com/v2/profile/api" target="_blank" rel="noopener noreferrer">Account settings &rarr; API Access</a>. Save it in your password manager.</small>
+  <main class="container">
+    <h1>Optimizely <span>Bulk Archive</span></h1>
+    <p class="intro">Clean up old Optimizely Web Experimentation A/B tests in bulk. Paste a personal API token and project ID, review paused or not-started experiments, then archive the ones you don't need - all client-side, nothing stored on a server.</p>
+
+    <article>
+      <form id="settingsForm" onsubmit="event.preventDefault(); fetchOptimizations()">
+        <div class="row" style="align-items: flex-end;">
+          <div class="field" style="flex: 2;">
+            <label for="token">Personal API token</label>
+            <input id="token" name="token" type="password" autocomplete="current-password"
+                   placeholder="Paste your token here" />
+            <small>Generate at <a href="https://app.optimizely.com/v2/profile/api" target="_blank" rel="noopener noreferrer">Account settings &rarr; API Access</a>. Save it in your password manager.</small>
+          </div>
+          <div class="field">
+            <label for="project">Project ID</label>
+            <input id="project" name="projectId" type="text" autocomplete="off"
+                   placeholder="e.g. 12345678901" />
+            <small>Found in the URL: app.optimizely.com/v2/projects/<strong>PROJECT_ID</strong>/&hellip;</small>
+          </div>
+          <button id="fetchBtn" type="submit" class="primary" style="width: auto; white-space: nowrap;">Fetch</button>
         </div>
-        <div class="field">
-          <label for="project">Project ID</label>
-          <input id="project" name="projectId" type="text" autocomplete="off"
-                 placeholder="e.g. 12345678901" />
-          <small>Found in the URL: app.optimizely.com/v2/projects/<strong>PROJECT_ID</strong>/&hellip;</small>
-        </div>
-        <button id="fetchBtn" type="submit" class="primary" style="align-self:flex-start;margin-top:20px;">Fetch</button>
+      </form>
+
+      <div id="status" class="status"></div>
+      <div id="progress" class="progress" style="display:none;"></div>
+
+      <div id="viewToggle" class="toolbar" style="display:none;">
+        <button class="secondary outline sm active" id="modeActiveBtn" onclick="setViewMode('active')">Active</button>
+        <button class="secondary outline sm" id="modeArchivedBtn" onclick="setViewMode('archived')" title="Browse archived experiments to unarchive them">Archived</button>
       </div>
-    </form>
 
-    <div id="status" class="status"></div>
-    <div id="progress" class="progress" style="display:none;"></div>
+      <div id="toolbar" class="toolbar" style="display:none;">
+        <button class="secondary outline sm" onclick="togglePage(true)">Select page</button>
+        <button class="secondary outline sm" onclick="togglePage(false)">Deselect page</button>
+        <button class="secondary outline sm" onclick="toggleAll(true)">Select all</button>
+        <button class="secondary outline sm" onclick="toggleAll(false)">Deselect all</button>
+        <span class="sel-count" id="selCount">0 selected</span>
+        <label class="page-size">Per page
+          <select id="pageSizeSelect" onchange="setPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <button id="bulkActionBtn" class="danger" onclick="bulkAction()" disabled style="width: auto;">Archive selected</button>
+      </div>
 
-    <div id="toolbar" class="toolbar" style="display:none;">
-      <button class="sm" onclick="togglePage(true)">Select page</button>
-      <button class="sm" onclick="togglePage(false)">Deselect page</button>
-      <button class="sm" onclick="toggleAll(true)">Select all</button>
-      <button class="sm" onclick="toggleAll(false)">Deselect all</button>
-      <span class="sel-count" id="selCount">0 selected</span>
-      <button id="archiveBtn" class="danger" onclick="archiveSelected()" disabled>Archive selected</button>
-    </div>
+      <div id="list"></div>
+      <div id="pagerWrap" style="display:none;"><div class="pager" id="pager"></div></div>
 
-    <div id="list"></div>
-    <div id="pagerWrap" style="display:none;"><div class="pager" id="pager"></div></div>
+      <hr>
 
-    <hr class="divider">
+      <details class="log-wrap" open>
+        <summary>Request log</summary>
+        <div id="log"></div>
+      </details>
+    </article>
 
-    <details class="log-wrap" open>
-      <summary>Request log</summary>
-      <div id="log"></div>
-    </details>
-  </div>
+    <footer class="app-footer">
+      Unofficial tool for bulk-archiving Optimizely Web Experimentation A/B tests. Not affiliated with or endorsed by Optimizely.
+      Requests go straight from your browser to the <a href="https://docs.developers.optimizely.com/web-experimentation/reference/list_experiments" target="_blank" rel="noopener noreferrer">Optimizely REST API</a>.
+      Source on <a href="https://github.com/simondahla/optimizely-bulk-archiver" target="_blank" rel="noopener noreferrer">GitHub</a>,
+      licensed under <a href="https://github.com/simondahla/optimizely-bulk-archiver/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>.
+      Provided as-is, use at your own risk — no warranty, no liability.
+    </footer>
+  </main>
 
-  <footer>
-    Unofficial tool for bulk-archiving Optimizely Web Experimentation A/B tests. Not affiliated with or endorsed by Optimizely.
-    Requests go straight from your browser to the <a href="https://docs.developers.optimizely.com/web-experimentation/reference/list_experiments" target="_blank" rel="noopener noreferrer">Optimizely REST API</a>.
-    Source on <a href="https://github.com/simondahla/optimizely-bulk-archiver" target="_blank" rel="noopener noreferrer">GitHub</a>.
-  </footer>
-
-  <script>
-    var PAGE_SIZE = 25;
-    var items = [];
-    var selected = new Set();
-    var currentPage = 1;
-    var projectId = '';
-    var EXCLUDE = ['archived', 'concluded', 'running'];
-    // GET /experiments has no server-side "type" filter (not in the API spec) --
-    // restrict to classic A/B tests client-side instead of relying on a query param that's silently ignored.
-    var INCLUDE_TYPES = ['a/b'];
-    // Safety: never allow selecting an experiment whose parent campaign could still be live.
-    // 'running' is already excluded above and never reaches the list at all; 'campaign_paused'
-    // is shown (so you can see it exists) but locked, since the campaign can be resumed any time.
-    var LOCKED_STATUSES = ['campaign_paused'];
-    // Safety: experiments created within this window are flagged "new" and excluded from
-    // "Select page" / "Select all" so a fresh test never gets swept up by accident. They can
-    // still be archived individually if you deliberately check their box.
-    var NEW_DAYS = 14;
-
-    // Restore project ID from localStorage on load
-    document.addEventListener('DOMContentLoaded', function() {
-      var savedProject = localStorage.getItem('optimizely_project_id');
-      if (savedProject) document.getElementById('project').value = savedProject;
-
-      document.getElementById('project').addEventListener('change', function() {
-        localStorage.setItem('optimizely_project_id', this.value.trim());
-      });
-    });
-
-    function findItem(id) { return items.find(function(i) { return i.id === id; }); }
-
-    function isLocked(item) { return item && LOCKED_STATUSES.indexOf(item.status) !== -1; }
-
-    function isNew(item) {
-      if (!item || !item.created) return false;
-      var ageMs = Date.now() - new Date(item.created).getTime();
-      return ageMs < NEW_DAYS * 24 * 60 * 60 * 1000;
-    }
-
-    function appendLog(text, cls) {
-      var el = document.getElementById('log');
-      var line = document.createElement('span');
-      line.className = cls || '';
-      line.textContent = text + '\n';
-      el.appendChild(line);
-      el.scrollTop = el.scrollHeight;
-    }
-    function logReq(method, url)  { appendLog('-> ' + method + ' ' + url, 'req'); }
-    function logRes(status, body) { appendLog('<- ' + status + ' ' + body, status >= 400 ? 'err' : 'res'); }
-    function logInfo(msg)         { appendLog('   ' + msg, 'info'); }
-    function logErr(msg)          { appendLog('X  ' + msg, 'err'); }
-
-    function pageCount() { return Math.ceil(items.length / PAGE_SIZE); }
-    function pageItems() { return items.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE); }
-
-    function setStatus(msg, type) {
-      var el = document.getElementById('status');
-      el.textContent = msg;
-      el.className = 'status' + (type ? ' ' + type : '');
-    }
-
-    function updateToolbar() {
-      document.getElementById('selCount').textContent = selected.size + ' selected';
-      document.getElementById('archiveBtn').disabled = selected.size === 0;
-    }
-
-    function toggleAll(val) {
-      items.forEach(function(item) {
-        if (val && (isLocked(item) || isNew(item))) return; // bulk-select never grabs locked or new items
-        val ? selected.add(item.id) : selected.delete(item.id);
-      });
-      render(); updateToolbar();
-    }
-
-    function togglePage(val) {
-      pageItems().forEach(function(item) {
-        if (val && (isLocked(item) || isNew(item))) return;
-        val ? selected.add(item.id) : selected.delete(item.id);
-      });
-      render(); updateToolbar();
-    }
-
-    function toggleItem(id) {
-      var item = findItem(id);
-      if (isLocked(item)) return; // locked items can never be selected, even individually
-      selected.has(id) ? selected.delete(id) : selected.add(id);
-      updateToolbar();
-      var cb = document.querySelector('[data-id="' + id + '"]');
-      if (cb) cb.checked = selected.has(id);
-    }
-
-    function goPage(p) { currentPage = p; render(); }
-
-    function escHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    function render() {
-      var pg = pageItems();
-      var listEl    = document.getElementById('list');
-      var pagerWrap = document.getElementById('pagerWrap');
-      var pagerEl   = document.getElementById('pager');
-
-      if (!items.length) { listEl.innerHTML = ''; pagerWrap.style.display = 'none'; return; }
-
-      listEl.innerHTML = '<div class="list">' + pg.map(function(item) {
-        var status = item.status || 'unknown';
-        var locked = isLocked(item);
-        var fresh  = isNew(item);
-        var rowStyle = ' style="' + (fresh ? 'border-left:3px solid #f59e0b;' : '') + (locked ? 'cursor:default;opacity:0.7;' : '') + '"';
-        return '<div class="item"' + rowStyle + (locked ? '' : ' onclick="toggleItem(' + item.id + ')"') + '>' +
-          '<input type="checkbox" data-id="' + item.id + '" ' + (selected.has(item.id) ? 'checked' : '') +
-            (locked ? ' disabled title="Locked: parent campaign is paused and could resume at any time"' : '') +
-            ' onclick="event.stopPropagation();toggleItem(' + item.id + ')">' +
-          '<div class="item-info">' +
-            '<div class="item-name"><a href="https://app.optimizely.com/v2/projects/' + projectId + '/experiments/' + item.id + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none;border-bottom:1px solid #d0d0d0;">' + escHtml(item.name || 'Untitled') + '</a>' +
-              (locked ? ' <span title="Campaign can resume at any time" style="font-size:11px;color:#92400e;">&#128274; locked</span>' : '') +
-              (fresh ? ' <span title="Created within the last ' + NEW_DAYS + ' days" style="font-size:11px;color:#b45309;font-weight:600;">NEW</span>' : '') +
-            '</div>' +
-            '<div class="item-meta">ID: ' + item.id + (item.last_modified ? ' &nbsp;·&nbsp; Modified: ' + new Date(item.last_modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</div>' +
-          '</div>' +
-          '<span class="badge badge-' + status + '">' + status + '</span>' +
-        '</div>';
-      }).join('') + '</div>';
-
-      var total = pageCount();
-      if (total <= 1) { pagerWrap.style.display = 'none'; return; }
-
-      var pages = [];
-      for (var i = 1; i <= total; i++) {
-        if (i === 1 || i === total || (i >= currentPage - 2 && i <= currentPage + 2)) {
-          pages.push(i);
-        } else if (pages[pages.length - 1] !== '...') {
-          pages.push('...');
-        }
-      }
-
-      var html = '<button class="pg" onclick="goPage(' + Math.max(1, currentPage - 1) + ')"' + (currentPage === 1 ? ' disabled' : '') + '>&lsaquo;</button>';
-      pages.forEach(function(p) {
-        if (p === '...') {
-          html += '<span style="padding:0 4px;line-height:30px;color:#999;">…</span>';
-        } else {
-          html += '<button class="pg' + (p === currentPage ? ' active' : '') + '" onclick="goPage(' + p + ')">' + p + '</button>';
-        }
-      });
-      html += '<button class="pg" onclick="goPage(' + Math.min(total, currentPage + 1) + ')"' + (currentPage === total ? ' disabled' : '') + '>&rsaquo;</button>';
-      html += '<span class="pager-info">' + ((currentPage - 1) * PAGE_SIZE + 1) + '-' + Math.min(currentPage * PAGE_SIZE, items.length) + ' of ' + items.length + '</span>';
-      pagerWrap.style.display = 'block';
-      pagerEl.innerHTML = html;
-    }
-
-    function apiHeaders(token) {
-      return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
-    }
-
-    async function fetchOptimizations() {
-      var token     = document.getElementById('token').value.trim();
-      projectId = document.getElementById('project').value.trim();
-      if (!token || !projectId) { setStatus('Enter a token and project ID.', 'err'); return; }
-
-      // Persist project ID for next visit
-      localStorage.setItem('optimizely_project_id', projectId);
-
-      setStatus('Fetching...');
-      document.getElementById('fetchBtn').disabled = true;
-      document.getElementById('toolbar').style.display = 'none';
-      items = []; selected.clear(); currentPage = 1;
-      render();
-
-      try {
-        var page = 1, all = [];
-        while (true) {
-          var url = '/api/v2/experiments?project_id=' + projectId + '&per_page=100&page=' + page;
-          logReq('GET', url);
-          var res  = await fetch(url, { headers: apiHeaders(token) });
-          var text = await res.text();
-          logRes(res.status, text.slice(0, 120) + (text.length > 120 ? '...' : ''));
-          if (!res.ok) throw new Error('API error ' + res.status + ': ' + text);
-          var data = JSON.parse(text);
-          if (!data.length) { logInfo('No more results'); break; }
-          all = all.concat(data);
-          logInfo(data.length + ' records on page ' + page + ' (total: ' + all.length + ')');
-          if (data.length < 100) break;
-          page++;
-        }
-        items = all.filter(function(e) {
-          return EXCLUDE.indexOf(e.status) === -1 && INCLUDE_TYPES.indexOf(e.type || 'a/b') !== -1;
-        });
-        items.sort(function(a, b) {
-          return new Date(a.last_modified) - new Date(b.last_modified);
-        });
-        var hidden = all.length - items.length;
-        setStatus(items.length + ' active A/B tests found' + (hidden ? ' (' + hidden + ' archived/concluded/running/non-A-B hidden)' : '') + '.', 'ok');
-        logInfo(items.length + ' shown, ' + hidden + ' filtered out');
-        if (items.length) document.getElementById('toolbar').style.display = 'flex';
-        render();
-      } catch(e) {
-        logErr(e.message);
-        setStatus(e.message, 'err');
-      }
-      document.getElementById('fetchBtn').disabled = false;
-    }
-
-    async function archiveSelected() {
-      var token = document.getElementById('token').value.trim();
-      var ids   = Array.from(selected);
-      if (!ids.length) return;
-
-      // Belt-and-suspenders: strip out anything locked that shouldn't be in `selected` in the
-      // first place (e.g. its status changed after fetch but before you clicked archive).
-      var lockedIds = ids.filter(function(id) { return isLocked(findItem(id)); });
-      if (lockedIds.length) {
-        ids = ids.filter(function(id) { return lockedIds.indexOf(id) === -1; });
-        lockedIds.forEach(function(id) { selected.delete(id); });
-        logInfo(lockedIds.length + ' locked item(s) removed from selection automatically');
-      }
-      if (!ids.length) { render(); updateToolbar(); return; }
-
-      var newOnes = ids.map(findItem).filter(isNew);
-      var confirmMsg = 'Archive ' + ids.length + ' experiment' + (ids.length === 1 ? '' : 's') + '?';
-      if (newOnes.length) {
-        confirmMsg += '\n\nWarning: ' + newOnes.length + ' of these were created within the last ' +
-          NEW_DAYS + ' days:\n' + newOnes.map(function(i) { return '  - ' + (i.name || i.id); }).join('\n') +
-          '\n\nArchiving is not immediately reversible from this tool. Continue?';
-      }
-      if (!confirm(confirmMsg)) return;
-
-      document.getElementById('archiveBtn').disabled = true;
-      document.getElementById('fetchBtn').disabled = true;
-      var prog = document.getElementById('progress');
-      prog.style.display = 'block';
-      setStatus('');
-
-      var done = 0, failed = [];
-      for (var i = 0; i < ids.length; i++) {
-        var id = ids[i];
-        prog.textContent = 'Archiving... ' + done + ' / ' + ids.length;
-        var url = '/api/v2/experiments/' + id;
-        logReq('DELETE', url);
-        try {
-          var res  = await fetch(url, { method: 'DELETE', headers: apiHeaders(token) });
-          var text = await res.text();
-          logRes(res.status, text.slice(0, 120) + (text.length > 120 ? '...' : ''));
-          if (res.status === 410) { logInfo(id + ' was already archived'); }
-          else if (!res.ok) throw new Error(res.status + ': ' + text);
-          selected.delete(id);
-          items = items.filter(function(x) { return x.id !== id; });
-          done++;
-        } catch(e) {
-          logErr('Failed ' + id + ': ' + e.message);
-          failed.push(id);
-          done++;
-        }
-      }
-
-      prog.style.display = 'none';
-      if (currentPage > pageCount()) currentPage = Math.max(1, pageCount());
-
-      if (failed.length) {
-        setStatus((done - failed.length) + ' archived. Failed IDs: ' + failed.join(', '), 'err');
-      } else {
-        setStatus(done + ' optimizations archived.', 'ok');
-      }
-
-      document.getElementById('toolbar').style.display = items.length ? 'flex' : 'none';
-      updateToolbar();
-      render();
-      document.getElementById('fetchBtn').disabled = false;
-    }
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

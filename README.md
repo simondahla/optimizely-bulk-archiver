@@ -2,10 +2,15 @@
 
 A single-page tool for bulk-archiving paused or not-started Optimizely A/B experiments. Hosted on Cloudflare Pages.
 
+Unofficial, provided as-is. Not affiliated with or endorsed by Optimizely. Use at your own risk — see [License](#license).
+
 ## What it does
 
 - Lists all non-running, non-archived A/B tests in a project
 - Lets you select and archive them in bulk
+- Switch to the **Archived** view to browse previously archived tests and unarchive them in bulk
+  (restores them to `paused`)
+- Choose how many results are shown per page (10/25/50/100, default 25)
 - Flags experiments created in the last 14 days as "NEW" and protects them from accidental bulk selection
 - Locks experiments whose parent campaign is paused (they can be resumed at any time)
 
@@ -24,6 +29,8 @@ A single-page tool for bulk-archiving paused or not-started Optimizely A/B exper
 3. Enter both values and click **Fetch** (or press Enter).
 
 4. Select the experiments you want to archive and click **Archive selected**.
+
+5. To undo, switch to the **Archived** tab, select the ones you want back, and click **Unarchive selected**.
 
 ---
 
@@ -105,7 +112,10 @@ Wrangler serves `public/` and runs the `functions/` proxy locally — identical 
 
 ```
 public/
-  index.html              Single-page app — no framework, no build step
+  index.html              Markup only
+  style.css               Custom styles, layered on top of Pico
+  pico.min.css            Pico CSS v2, vendored locally (no CDN dependency)
+  app.js                  All client-side behavior
 functions/
   api/
     [[path]].js           Cloudflare Pages Function: proxies /api/* → api.optimizely.com
@@ -114,3 +124,13 @@ functions/
     deploy.yml            CI/CD: deploys to Cloudflare Pages on merge to main
 wrangler.toml             Cloudflare project config; used by local dev and dashboard deploy
 ```
+
+No build step or bundler — `public/` is served as-is. Styling uses [Pico CSS](https://picocss.com)
+for base typography/forms/buttons, with brand colors applied via Pico's CSS custom properties and a
+small custom layer in `style.css` for the pieces Pico doesn't cover (badges, the request log, the item list).
+
+---
+
+## License
+
+[MIT](LICENSE) — provided "as is", with no warranty and no liability accepted for its use.
