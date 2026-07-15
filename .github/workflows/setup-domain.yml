@@ -1,0 +1,35 @@
+name: Add custom domain
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Custom domain to add (e.g. archiver.yourdomain.com)"
+        required: true
+        type: string
+
+jobs:
+  add-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add domain to Cloudflare Pages project
+        run: |
+          response=$(curl -s -o /tmp/cf_response.json -w "%{http_code}" \
+            -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/optimizely-bulk-archiver/domains" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"name": "${{ github.event.inputs.domain }}"}')
+
+          cat /tmp/cf_response.json | python3 -m json.tool || cat /tmp/cf_response.json
+
+          if [ "$response" != "200" ] && [ "$response" != "409" ]; then
+            echo "Failed with HTTP $response"
+            exit 1
+          fi
+
+          if [ "$response" = "409" ]; then
+            echo "Domain already attached to this project."
+          else
+            echo "Domain ${{ github.event.inputs.domain }} added. Cloudflare will now verify DNS — check the Pages dashboard for status."
+          fi
