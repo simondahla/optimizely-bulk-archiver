@@ -1,0 +1,2 @@
+name = "optimizely-bulk-archiver"
+pages_build_output_dir = "public"
