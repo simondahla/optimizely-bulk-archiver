@@ -93,11 +93,11 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys automatical
 ## Local development
 
 ```sh
-node server.js
+npx wrangler pages dev
 # Open http://localhost:3000
 ```
 
-`server.js` runs a local proxy so the HTML file can reach the Optimizely API without CORS issues. This is equivalent to what the Cloudflare Pages Function does in production.
+Wrangler serves `public/` and runs the `functions/` proxy locally — identical to the production environment.
 
 ---
 
@@ -112,5 +112,5 @@ functions/
 .github/
   workflows/
     deploy.yml            CI/CD: deploys to Cloudflare Pages on merge to main
-server.js                 Local dev only — not deployed
+wrangler.toml             Cloudflare project config; used by local dev and dashboard deploy
 ```
