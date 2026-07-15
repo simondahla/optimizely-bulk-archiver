@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimizely bulk archive</title>
+  <title>Optimizely Bulk Archive</title>
+  <meta name="description" content="Bulk-archive old Optimizely Web Experimentation A/B tests in a few clicks. Paste your personal API token and project ID, review what's paused or not started, then archive in bulk - runs entirely in your browser.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; background: #f5f5f5; color: #1a1a1a; padding: 2rem; }
-    h1 { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
+    h1 span { color: #3b82f6; }
+    .intro { font-size: 13px; color: #666; max-width: 760px; margin-bottom: 1.5rem; line-height: 1.5; }
+    footer { max-width: 760px; margin: 2rem 0 0; padding-top: 1rem; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; line-height: 1.6; }
+    footer a { color: #3b82f6; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
     .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; max-width: 760px; }
     .row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: flex-end; }
     .field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
@@ -59,7 +65,8 @@
   </style>
 </head>
 <body>
-  <h1>Optimizely bulk archive</h1>
+  <h1>Optimizely <span>Bulk Archive</span></h1>
+  <p class="intro">Clean up old Optimizely Web Experimentation A/B tests in bulk. Paste a personal API token and project ID, review paused or not-started experiments, then archive the ones you don't need - all client-side, nothing stored on a server.</p>
   <div class="card">
     <form id="settingsForm" onsubmit="event.preventDefault(); fetchOptimizations()">
       <div class="row">
@@ -101,6 +108,11 @@
       <div id="log"></div>
     </details>
   </div>
+
+  <footer>
+    Unofficial tool for bulk-archiving Optimizely Web Experimentation A/B tests. Not affiliated with or endorsed by Optimizely.
+    Requests go straight from your browser to the <a href="https://docs.developers.optimizely.com/web-experimentation/reference/list_experiments" target="_blank" rel="noopener noreferrer">Optimizely REST API</a>.
+  </footer>
 
   <script>
     var PAGE_SIZE = 25;
