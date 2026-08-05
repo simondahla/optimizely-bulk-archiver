@@ -5,6 +5,9 @@ var viewMode = 'active'; // 'active' | 'archived' - drives both the list filter 
 var selected = new Set();
 var currentPage = 1;
 var projectId = '';
+var sortKey = 'last_modified:desc'; // field:direction — see setSort()
+var filterText = '';   // live name search
+var filterStatus = ''; // status dropdown (active mode only)
 // Running experiments are hidden by default: this tool is for cleaning up dead/unused tests,
 // not for touching ones actively serving traffic. A running test has to be paused in Optimizely
 // itself before it's a candidate for archiving here.
@@ -41,23 +44,65 @@ function isNew(item) {
   return ageMs < NEW_DAYS * 24 * 60 * 60 * 1000;
 }
 
-// Re-derives `items` from the already-fetched `allItems` for the current viewMode.
-// No extra API call needed since fetchOptimizations() already pulls every status.
+// Re-derives `items` from the already-fetched `allItems` for the current viewMode,
+// then applies the active text/status filters and sort. No extra API call needed.
 function computeItems() {
+  var text = filterText.toLowerCase();
+  var parts = sortKey.split(':');
+  var sortField = parts[0], sortDir = parts[1];
   return allItems.filter(function(e) {
     if (INCLUDE_TYPES.indexOf(e.type || 'a/b') === -1) return false;
-    return viewMode === 'archived' ? e.status === 'archived' : EXCLUDE.indexOf(e.status) === -1;
+    if (viewMode === 'archived' ? e.status !== 'archived' : EXCLUDE.indexOf(e.status) !== -1) return false;
+    if (text && (e.name || '').toLowerCase().indexOf(text) === -1) return false;
+    if (filterStatus && viewMode !== 'archived' && e.status !== filterStatus) return false;
+    return true;
   }).sort(function(a, b) {
-    return new Date(a.last_modified) - new Date(b.last_modified);
+    var va, vb;
+    if (sortField === 'name') {
+      va = (a.name || '').toLowerCase();
+      vb = (b.name || '').toLowerCase();
+      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    va = new Date(a[sortField] || 0).getTime();
+    vb = new Date(b[sortField] || 0).getTime();
+    return sortDir === 'asc' ? va - vb : vb - va;
   });
 }
 
+function setSort(val) {
+  sortKey = val;
+  currentPage = 1;
+  items = computeItems();
+  render();
+}
+
+function setFilterText(val) {
+  filterText = val.trim();
+  currentPage = 1;
+  items = computeItems();
+  render();
+  updateToolbar();
+}
+
+function setFilterStatus(val) {
+  filterStatus = val;
+  currentPage = 1;
+  items = computeItems();
+  render();
+  updateToolbar();
+}
+
 function updateStatusMessage() {
+  var baseCount = allItems.filter(function(e) {
+    if (INCLUDE_TYPES.indexOf(e.type || 'a/b') === -1) return false;
+    return viewMode === 'archived' ? e.status === 'archived' : EXCLUDE.indexOf(e.status) === -1;
+  }).length;
+  var prefix = items.length !== baseCount ? items.length + ' of ' + baseCount : '' + items.length;
   if (viewMode === 'archived') {
-    setStatus(items.length + ' archived A/B test' + (items.length === 1 ? '' : 's') + ' found.', 'ok');
+    setStatus(prefix + ' archived A/B test' + (items.length === 1 ? '' : 's') + ' found.', 'ok');
   } else {
-    var hidden = allItems.length - items.length;
-    setStatus(items.length + ' active A/B tests found' + (hidden ? ' (' + hidden + ' archived/concluded/running/non-A-B hidden)' : '') + '.', 'ok');
+    var hidden = allItems.length - baseCount;
+    setStatus(prefix + ' active A/B tests found' + (hidden ? ' (' + hidden + ' archived/concluded/running/non-A-B hidden)' : '') + '.', 'ok');
   }
 }
 
@@ -104,6 +149,9 @@ function setViewMode(mode) {
   viewMode = mode;
   selected.clear();
   currentPage = 1;
+  filterStatus = '';
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('statusFilter').style.display = mode === 'archived' ? 'none' : '';
   items = computeItems();
   document.getElementById('modeActiveBtn').classList.toggle('active', mode === 'active');
   document.getElementById('modeArchivedBtn').classList.toggle('active', mode === 'archived');
@@ -172,7 +220,7 @@ function render() {
           (locked ? ' <span title="Campaign can resume at any time" style="font-size:11px;color:#92400e;">&#128274; locked</span>' : '') +
           (fresh ? ' <span title="Created within the last ' + NEW_DAYS + ' days" style="font-size:11px;color:#b45309;font-weight:600;">NEW</span>' : '') +
         '</div>' +
-        '<div class="item-meta">ID: ' + escHtml(item.id) + (item.variations ? ' &nbsp;·&nbsp; Variants: ' + item.variations.length : '') + (item.last_modified ? ' &nbsp;·&nbsp; Modified: ' + new Date(item.last_modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</div>' +
+        '<div class="item-meta">ID: ' + escHtml(item.id) + (item.variations ? ' &nbsp;·&nbsp; Variants: ' + item.variations.length : '') + (item.created ? ' &nbsp;·&nbsp; Created: ' + new Date(item.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + (item.last_modified ? ' &nbsp;·&nbsp; Modified: ' + new Date(item.last_modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</div>' +
       '</div>' +
       '<span class="badge badge-' + escHtml(status) + '">' + escHtml(status) + '</span>' +
     '</div>';
@@ -219,6 +267,11 @@ async function fetchOptimizations() {
   setStatus('Fetching...');
   document.getElementById('fetchBtn').disabled = true;
   document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  filterText = ''; filterStatus = ''; sortKey = 'last_modified:desc';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('sortSelect').value = 'last_modified:desc';
   items = []; selected.clear(); currentPage = 1;
   render();
 
@@ -250,6 +303,8 @@ async function fetchOptimizations() {
     if (allItems.length) {
       document.getElementById('toolbar').style.display = 'flex';
       document.getElementById('viewToggle').style.display = 'flex';
+      document.getElementById('filterBar').style.display = 'flex';
+      document.getElementById('statusFilter').style.display = '';
     }
     render();
   } catch(e) {
