@@ -40,6 +40,28 @@
         <button class="secondary outline sm" id="modeArchivedBtn" onclick="setViewMode('archived')" title="Browse archived experiments to unarchive them">Archived</button>
       </div>
 
+      <div id="filterBar" class="toolbar" style="display:none;">
+        <input id="searchInput" type="search" placeholder="Filter by name…"
+               oninput="setFilterText(this.value)"
+               style="flex:1;min-width:120px;height:30px;padding:0 10px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
+        <select id="statusFilter" onchange="setFilterStatus(this.value)"
+                style="height:30px;padding:0 8px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
+          <option value="">All statuses</option>
+          <option value="paused">Paused</option>
+          <option value="not_started">Not started</option>
+          <option value="campaign_paused">Campaign paused</option>
+        </select>
+        <select id="sortSelect" onchange="setSort(this.value)"
+                style="height:30px;padding:0 8px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
+          <option value="last_modified:desc">Modified: newest</option>
+          <option value="last_modified:asc">Modified: oldest</option>
+          <option value="created:desc">Created: newest</option>
+          <option value="created:asc">Created: oldest</option>
+          <option value="name:asc">Name: A → Z</option>
+          <option value="name:desc">Name: Z → A</option>
+        </select>
+      </div>
+
       <div id="toolbar" class="toolbar" style="display:none;">
         <button class="secondary outline sm" onclick="togglePage(true)">Select page</button>
         <button class="secondary outline sm" onclick="togglePage(false)">Deselect page</button>
