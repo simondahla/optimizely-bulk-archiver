@@ -1,0 +1,32 @@
+name: Docs sync check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  docs-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check README/CLAUDE.md were updated alongside code changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
+
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          CODE_CHANGED=$(echo "$CHANGED" | grep -E '^(public/|functions/|wrangler\.toml)' || true)
+          DOCS_CHANGED=$(echo "$CHANGED" | grep -E '^(README\.md|CLAUDE\.md)$' || true)
+
+          if [ -n "$CODE_CHANGED" ] && [ -z "$DOCS_CHANGED" ]; then
+            echo "::error::This PR touches public/, functions/, or wrangler.toml but neither README.md nor CLAUDE.md changed. Update whichever doc describes the change (or both), or push a trivial doc touch if nothing user- or architecture-facing changed."
+            exit 1
+          fi
+
+          echo "OK — docs updated, or no code paths that require it changed."
