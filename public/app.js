@@ -172,7 +172,7 @@ function render() {
           (locked ? ' <span title="Campaign can resume at any time" style="font-size:11px;color:#92400e;">&#128274; locked</span>' : '') +
           (fresh ? ' <span title="Created within the last ' + NEW_DAYS + ' days" style="font-size:11px;color:#b45309;font-weight:600;">NEW</span>' : '') +
         '</div>' +
-        '<div class="item-meta">ID: ' + escHtml(item.id) + (item.last_modified ? ' &nbsp;·&nbsp; Modified: ' + new Date(item.last_modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</div>' +
+        '<div class="item-meta">ID: ' + escHtml(item.id) + (item.variations ? ' &nbsp;·&nbsp; Variants: ' + item.variations.length : '') + (item.last_modified ? ' &nbsp;·&nbsp; Modified: ' + new Date(item.last_modified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</div>' +
       '</div>' +
       '<span class="badge badge-' + escHtml(status) + '">' + escHtml(status) + '</span>' +
     '</div>';
