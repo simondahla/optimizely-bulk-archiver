@@ -79,6 +79,9 @@
             <option value="100">100</option>
           </select>
         </label>
+        <label class="dry-toggle" title="Log every request without sending it">
+          <input type="checkbox" id="dryRunToggle" onchange="setDryRun(this.checked)"> Dry run
+        </label>
         <button id="retryBtn" class="secondary outline sm" onclick="retryFailed()" style="display:none;width:auto;" title="Re-run the last action on the IDs that errored">Retry failed</button>
         <button id="bulkActionBtn" class="danger" onclick="bulkAction()" disabled style="width: auto;">Archive selected</button>
       </div>

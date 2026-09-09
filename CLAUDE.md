@@ -16,7 +16,9 @@ Do NOT add Claude as a co-author. No `Co-Authored-By` lines in any commit.
   selection/bulk code below it is entity-agnostic and reads from `cfg()`. Add a new entity
   type by adding a registry entry, not by branching in the shared code.
   Bulk runs go through `runBulk()` (a `CONCURRENCY`-wide worker pool) and
-  `requestWithRetry()` (429/5xx backoff honouring `Retry-After` / `X-RateLimit-Reset`)
+  `requestWithRetry()` (429/5xx backoff honouring `Retry-After` / `X-RateLimit-Reset`).
+  The `dryRun` flag short-circuits `runBulk()` before the request: it logs what would be
+  sent and leaves the item and the selection untouched. Any new bulk path must honour it
 - `functions/api/[[path]].js` — Cloudflare Pages Function that proxies all `/api/*`
   requests to `https://api.optimizely.com`, forwarding the Authorization header
 - `.github/workflows/deploy.yml` — deploys to Cloudflare Pages on push to `main`;

@@ -10,6 +10,11 @@ var sortKey = 'last_modified:desc'; // field:direction — see setSort()
 var filterText = '';   // live name search
 var filterStatus = ''; // status/type dropdown
 var lastFailed = [];   // ids from the previous bulk run that errored, for "Retry failed"
+// When on, a bulk run logs every request it would send and sends none. Two of the
+// page/event endpoints were inferred rather than read from Optimizely's docs, so this
+// is how you check the whole batch before touching anything. Deliberately not reset by
+// setEntity() or a fetch: it's a session-long posture, not per-tab state.
+var dryRun = false;
 
 // Raw API results per entity, so switching tabs doesn't refetch. Cleared when the project ID changes.
 var cache = {};
@@ -303,6 +308,7 @@ function logReq(method, url)  { appendLog('-> ' + method + ' ' + url, 'req'); }
 function logRes(status, body) { appendLog('<- ' + status + ' ' + body, status >= 400 ? 'err' : 'res'); }
 function logInfo(msg)         { appendLog('   ' + msg, 'info'); }
 function logErr(msg)          { appendLog('X  ' + msg, 'err'); }
+function logDry(method, url, body) { appendLog('~> DRY RUN ' + method + ' ' + url + (body ? ' ' + body : ''), 'dry'); }
 
 function trunc(text) { return text.slice(0, 120) + (text.length > 120 ? '...' : ''); }
 
@@ -320,9 +326,18 @@ function updateToolbar() {
   document.getElementById('bulkActionBtn').disabled = selected.size === 0;
 }
 
+function setDryRun(val) {
+  dryRun = !!val;
+  updateBulkActionButton();
+}
+
 function updateBulkActionButton() {
   var btn = document.getElementById('bulkActionBtn');
-  if (viewMode === 'archived') {
+  if (dryRun) {
+    // A run that mutates nothing should never wear the red danger button.
+    btn.textContent = viewMode === 'archived' ? 'Preview unarchive' : 'Preview archive';
+    btn.className = 'secondary outline';
+  } else if (viewMode === 'archived') {
     btn.textContent = 'Unarchive selected';
     btn.className = 'primary';
   } else {
@@ -649,11 +664,18 @@ async function runBulk(ids, action, kind, onProgress) {
       var id   = ids[i];
       var item = findItem(id);
       if (!item) { failed.push(id); done++; onProgress(done, failed.length); continue; }
-      var url = action.url(item);
+      var url  = action.url(item);
+      var body = action.body ? action.body(item) : null;
+      if (dryRun) {
+        logDry(action.method, url, body);
+        done++;
+        onProgress(done, failed.length);
+        continue; // no request, no state change, and the selection survives
+      }
       logReq(action.method, url);
       try {
         var opts = { method: action.method, headers: apiHeaders(document.getElementById('token').value.trim()) };
-        if (action.body) opts.body = action.body(item);
+        if (body) opts.body = body;
         var res  = await requestWithRetry(url, opts);
         var text = await res.text();
         logRes(res.status, trunc(text));
@@ -710,7 +732,7 @@ async function bulkAction(retryIds) {
     }
     confirmMsg += '\n\nContinue?';
   }
-  if (!confirm(confirmMsg)) return;
+  if (!dryRun && !confirm(confirmMsg)) return; // nothing to confirm when nothing is sent
 
   document.getElementById('bulkActionBtn').disabled = true;
   document.getElementById('fetchBtn').disabled = true;
@@ -720,7 +742,7 @@ async function bulkAction(retryIds) {
   setStatus('');
   rateLimitUntil = 0;
 
-  var verb = kind === 'archive' ? 'Archiving' : 'Unarchiving';
+  var verb = dryRun ? 'Previewing' : (kind === 'archive' ? 'Archiving' : 'Unarchiving');
   function onProgress(done, failedCount) {
     prog.textContent = verb + '... ' + done + ' / ' + ids.length + (failedCount ? ' (' + failedCount + ' failed)' : '');
   }
@@ -731,6 +753,15 @@ async function bulkAction(retryIds) {
   items = computeItems();
   prog.style.display = 'none';
   if (currentPage > pageCount()) currentPage = Math.max(1, pageCount());
+
+  if (dryRun) {
+    setStatus('Dry run: ' + ids.length + ' request' + (ids.length === 1 ? '' : 's') +
+              ' previewed in the log, nothing sent.', 'ok');
+    updateToolbar();
+    render();
+    document.getElementById('fetchBtn').disabled = false;
+    return;
+  }
 
   var succeeded = ids.length - failed.length;
   lastFailed = failed;

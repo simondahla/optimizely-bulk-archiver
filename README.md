@@ -32,6 +32,10 @@ Across all three:
 - Filter by name, filter by status (experiments) or type (pages and events), and sort by
   name, created or modified date
 - Choose how many results are shown per page (10/25/50/100, default 25)
+- **Dry run** previews a whole selection: tick it and the bulk button walks every
+  selected item, logs the exact method, URL and body it would send, and sends nothing.
+  The button turns into **Preview archive** / **Preview unarchive** so a run that
+  mutates nothing never wears the red button, and your selection survives the preview.
 - Bulk runs send 4 requests at a time and back off on `429`/`5xx` using the API's
   `Retry-After` and `X-RateLimit-Reset` headers, so a run of hundreds doesn't die partway.
   Anything that still errors is listed and can be re-run with **Retry failed**.
@@ -53,13 +57,17 @@ Across all three:
    **Fetch** (or press Enter). On the Pages and Events tabs the tool also fetches your
    experiments so it knows what is still in use.
 
-4. Select the items you want to archive and click **Archive selected**. Locked rows can't be
-   selected; hover one to see which experiments still reference it.
+4. Select the items you want to archive. Locked rows can't be selected; hover one to see
+   which experiments still reference it.
 
-5. To undo, switch to the **Archived** view, select the ones you want back, and click
+5. Tick **Dry run** and click **Preview archive** first. Nothing is sent — the request log
+   fills with the exact request each item would get, so you can check the endpoints before
+   committing. Untick it and click **Archive selected** to run for real.
+
+6. To undo, switch to the **Archived** view, select the ones you want back, and click
    **Unarchive selected**.
 
-6. If a run reports failures, click **Retry failed** to re-run just those IDs. Every request
+7. If a run reports failures, click **Retry failed** to re-run just those IDs. Every request
    and response is in the **Request log** at the bottom of the page.
 
 ---
