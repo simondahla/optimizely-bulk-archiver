@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Optimizely Bulk Archive</title>
-  <meta name="description" content="Bulk-archive old Optimizely Web Experimentation A/B tests in a few clicks. Paste your personal API token and project ID, review what's paused or not started, then archive in bulk - runs entirely in your browser.">
+  <meta name="description" content="Bulk-archive old Optimizely Web Experimentation A/B tests, pages and events in a few clicks. Paste your personal API token and project ID, review what is unused, then archive in bulk - runs entirely in your browser.">
   <link rel="stylesheet" href="pico.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="container">
     <h1>Optimizely <span>Bulk Archive</span></h1>
-    <p class="intro">Clean up old Optimizely Web Experimentation A/B tests in bulk. Paste a personal API token and project ID, review paused or not-started experiments, then archive the ones you don't need - all client-side, nothing stored on a server.</p>
+    <p class="intro">Clean up old Optimizely Web Experimentation A/B tests, pages and events in bulk. Paste a personal API token and project ID, pick a tab, review what is unused, then archive the ones you don't need - all client-side, nothing stored on a server. Pages and events still referenced by a live experiment are locked so you can't break a running test.</p>
 
     <article>
       <form id="settingsForm" onsubmit="event.preventDefault(); fetchOptimizations()">
@@ -35,6 +35,12 @@
       <div id="status" class="status"></div>
       <div id="progress" class="progress" style="display:none;"></div>
 
+      <div id="entityTabs" class="toolbar entity-tabs">
+        <button class="secondary outline sm active" id="tab-experiments" onclick="setEntity('experiments')">Experiments</button>
+        <button class="secondary outline sm" id="tab-pages" onclick="setEntity('pages')" title="Pages the snippet activates on">Pages</button>
+        <button class="secondary outline sm" id="tab-events" onclick="setEntity('events')" title="Click and custom events">Events</button>
+      </div>
+
       <div id="viewToggle" class="toolbar" style="display:none;">
         <button class="secondary outline sm active" id="modeActiveBtn" onclick="setViewMode('active')">Active</button>
         <button class="secondary outline sm" id="modeArchivedBtn" onclick="setViewMode('archived')" title="Browse archived experiments to unarchive them">Archived</button>
@@ -46,10 +52,7 @@
                style="flex:1;min-width:120px;height:30px;padding:0 10px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
         <select id="statusFilter" onchange="setFilterStatus(this.value)"
                 style="height:30px;padding:0 8px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
-          <option value="">All statuses</option>
-          <option value="paused">Paused</option>
-          <option value="not_started">Not started</option>
-          <option value="campaign_paused">Campaign paused</option>
+          <!-- options are rebuilt per entity by renderStatusFilter() in app.js -->
         </select>
         <select id="sortSelect" onchange="setSort(this.value)"
                 style="height:30px;padding:0 8px;font-size:0.8125rem;margin-bottom:0;--pico-form-element-spacing-vertical:0;">
@@ -76,6 +79,7 @@
             <option value="100">100</option>
           </select>
         </label>
+        <button id="retryBtn" class="secondary outline sm" onclick="retryFailed()" style="display:none;width:auto;" title="Re-run the last action on the IDs that errored">Retry failed</button>
         <button id="bulkActionBtn" class="danger" onclick="bulkAction()" disabled style="width: auto;">Archive selected</button>
       </div>
 
@@ -91,7 +95,7 @@
     </article>
 
     <footer class="app-footer">
-      Unofficial tool for bulk-archiving Optimizely Web Experimentation A/B tests. Not affiliated with or endorsed by Optimizely.
+      Unofficial tool for bulk-archiving Optimizely Web Experimentation A/B tests, pages and events. Not affiliated with or endorsed by Optimizely.
       Requests go straight from your browser to the <a href="https://docs.developers.optimizely.com/web-experimentation/reference/list_experiments" target="_blank" rel="noopener noreferrer">Optimizely REST API</a>.
       Source on <a href="https://github.com/simondahla/optimizely-bulk-archiver" target="_blank" rel="noopener noreferrer">GitHub</a>,
       licensed under <a href="https://github.com/simondahla/optimizely-bulk-archiver/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>.

@@ -1,18 +1,41 @@
 # Optimizely Bulk Archiver
 
-A single-page tool for bulk-archiving paused or not-started Optimizely A/B experiments. Hosted on Cloudflare Pages.
+A single-page tool for bulk-archiving unused Optimizely Web Experimentation A/B experiments, pages and events. Hosted on Cloudflare Pages.
 
 Unofficial, provided as-is. Not affiliated with or endorsed by Optimizely. Use at your own risk — see [License](#license).
 
 ## What it does
 
-- Lists all non-running, non-archived A/B tests in a project
-- Lets you select and archive them in bulk
-- Switch to the **Archived** view to browse previously archived tests and unarchive them in bulk
-  (restores them to `paused`)
+Three tabs, one for each kind of clutter a project accumulates:
+
+- **Experiments** — lists all non-running, non-archived A/B tests. Archiving uses
+  `DELETE /v2/experiments/{id}`; unarchiving restores them to `paused`.
+- **Pages** — lists the pages the snippet activates on. Archiving flips `archived` via
+  `PATCH /v2/pages/{id}`, so it is reversible from the Archived view.
+- **Events** — lists click and custom events. The archive request depends on the event:
+  click events go to `/v2/pages/{page_id}/events/{id}`, custom events to
+  `/v2/projects/{project_id}/custom_events/{id}`. Pageview events are omitted because
+  Optimizely stores them as pages — archive those from the Pages tab.
+
+Across all three:
+
+- Select and archive in bulk, then switch to the **Archived** view to select and unarchive
+  in bulk
+- **Pages and events still referenced by a non-archived experiment are locked.** The tool
+  fetches the experiment list alongside them, indexes every `page_ids` entry and every
+  `metrics[].event_id`, and disables those rows so you can't silently break a live test.
+  The lock tooltip names the experiments using it.
+- Experiments whose parent campaign is paused stay locked, as before (the campaign can be
+  resumed at any time)
+- Anything created in the last 14 days is flagged "NEW" and excluded from **Select page** /
+  **Select all**; you can still tick it individually
+- Filter by name, filter by status (experiments) or type (pages and events), and sort by
+  name, created or modified date
 - Choose how many results are shown per page (10/25/50/100, default 25)
-- Flags experiments created in the last 14 days as "NEW" and protects them from accidental bulk selection
-- Locks experiments whose parent campaign is paused (they can be resumed at any time)
+- Bulk runs send 4 requests at a time and back off on `429`/`5xx` using the API's
+  `Retry-After` and `X-RateLimit-Reset` headers, so a run of hundreds doesn't die partway.
+  Anything that still errors is listed and can be re-run with **Retry failed**.
+- Switching tabs reuses what was already fetched; **Fetch** reloads the current tab
 
 ---
 
@@ -26,11 +49,18 @@ Unofficial, provided as-is. Not affiliated with or endorsed by Optimizely. Use a
    Open your Optimizely project. The ID is in the URL:
    `app.optimizely.com/v2/projects/**12345678901**/...`
 
-3. Enter both values and click **Fetch** (or press Enter).
+3. Pick a tab — **Experiments**, **Pages** or **Events** — then enter both values and click
+   **Fetch** (or press Enter). On the Pages and Events tabs the tool also fetches your
+   experiments so it knows what is still in use.
 
-4. Select the experiments you want to archive and click **Archive selected**.
+4. Select the items you want to archive and click **Archive selected**. Locked rows can't be
+   selected; hover one to see which experiments still reference it.
 
-5. To undo, switch to the **Archived** tab, select the ones you want back, and click **Unarchive selected**.
+5. To undo, switch to the **Archived** view, select the ones you want back, and click
+   **Unarchive selected**.
+
+6. If a run reports failures, click **Retry failed** to re-run just those IDs. Every request
+   and response is in the **Request log** at the bottom of the page.
 
 ---
 
@@ -128,6 +158,13 @@ wrangler.toml             Cloudflare project config; used by local dev and dashb
 No build step or bundler — `public/` is served as-is. Styling uses [Pico CSS](https://picocss.com)
 for base typography/forms/buttons, with brand colors applied via Pico's CSS custom properties and a
 small custom layer in `style.css` for the pieces Pico doesn't cover (badges, the request log, the item list).
+
+Everything that differs between experiments, pages and events lives in the `ENTITIES` registry at
+the top of `app.js`: the list endpoint, the archive/unarchive method, URL and body, the status
+vocabulary, the row metadata and the user-facing nouns. The list, filter, sort, pager, selection
+and bulk-request machinery is entity-agnostic and reads from it, so adding a fourth entity type
+(audiences, say) is a matter of adding one entry. The Pages Function needs no changes for new
+entity types — it forwards any path.
 
 ---
 

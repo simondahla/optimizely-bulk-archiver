@@ -61,6 +61,8 @@ button.danger:hover:not(:disabled) { background: #dc2626; border-color: #dc2626;
 
 .toolbar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
 .toolbar .sel-count { font-size: 0.8125rem; color: var(--pico-muted-color); margin-right: auto; }
+/* Entity tabs sit above everything else and are always visible, so give them a bit more air */
+.entity-tabs { margin-bottom: 14px; }
 
 .page-size { font-size: 0.75rem; color: var(--pico-muted-color); display: flex; align-items: center; gap: 4px; margin-bottom: 0; }
 .page-size select { height: 30px; padding: 0 8px; font-size: 0.8125rem; margin-bottom: 0; --pico-form-element-spacing-vertical: 0; }
@@ -94,10 +96,21 @@ button.danger:hover:not(:disabled) { background: #dc2626; border-color: #dc2626;
 .item-meta { font-size: 0.75rem; color: var(--pico-muted-color); margin-top: 2px; }
 
 .badge { display: inline-block; font-size: 0.6875rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; flex-shrink: 0; }
+/* Experiment statuses */
 .badge-paused          { background: #fef9c3; color: #a16207; }
 .badge-campaign_paused { background: #fde68a; color: #92400e; }
 .badge-not_started     { background: #f1f5f9; color: #64748b; }
-.badge-archived         { background: #e5e7eb; color: #4b5563; }
+/* Pages and events carry an `archived` boolean rather than a status enum */
+.badge-archived        { background: #e5e7eb; color: #4b5563; }
+.badge-active          { background: #dcfce7; color: #15803d; }
+/* Event types */
+.badge-click           { background: #dbeafe; color: #1d4ed8; }
+.badge-custom          { background: #ede9fe; color: #6d28d9; }
+.badge-unknown         { background: #f1f5f9; color: #64748b; }
+
+/* Row flags: the campaign lock, the in-use lock, and the recently-created warning */
+.lock-tag { font-size: 11px; color: #92400e; }
+.new-tag  { font-size: 11px; color: #b45309; font-weight: 600; }
 
 .pager { display: flex; gap: 4px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
 .pager-info { font-size: 0.75rem; color: var(--pico-muted-color); margin-left: 6px; }
